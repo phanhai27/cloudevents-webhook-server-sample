@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"main/sms_events"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"main/sms_events"
 
 	"github.com/NdoleStudio/httpsms-go"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
@@ -20,8 +19,8 @@ import (
 func receive(event cloudevents.Event) {
 	log.Printf("receive event: %s\n", event)
 
-	if event.Type() == sms_events.EventTypeMessagePhoneReceived && event.DataContentType() == "application/json" {
-		received_event := sms_events.MessagePhoneReceivedPayload{}
+	if event.Type() == sms_events.EventTypeMessagePhoneReceived && event.DataContentType() == cloudevents.ApplicationJSON {
+		received_event := httpsms.Message{}
 		err := json.Unmarshal(event.Data(), &received_event)
 		if err != nil {
 			log.Println("[ERROR] Unmarshal Payload: ", err)
