@@ -3,18 +3,47 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"main/sms_events"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/NdoleStudio/httpsms-go"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
+
+func authorize(authorizationString string) bool {
+	authorization := strings.Split(authorizationString, " ")
+	tokenString := ""
+	if len(authorization) == 2 {
+		tokenString = authorization[1] // authorization[0] == "Bearer"
+	} else if len(authorization) == 1 {
+		tokenString = authorization[0]
+	}
+
+	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte("Signing Key"), nil
+	})
+
+	if err != nil {
+		log.Printf("[ERROR] Authorize HttpSms fail: %v\n", err)
+		return false
+	}
+
+	return true
+}
 
 func receive(event cloudevents.Event) {
 	log.Printf("receive event: %s\n", event)
@@ -80,8 +109,11 @@ func main() {
 	// Handle webhook request which has a payload of the cloudevents format
 	httpMux.HandleFunc("/webhook/", func(w http.ResponseWriter, r *http.Request) {
 		authorizationString := r.Header.Get("Authorization")
-		if authorizationString != "" {
+		if authorizationString != "" { // optional
 			log.Println("[INFO] Cloudevents webhook - Authorization header: ", authorizationString)
+			if !authorize(authorizationString) {
+				return
+			}
 		}
 
 		bytes, err := io.ReadAll(r.Body)

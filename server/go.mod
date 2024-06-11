@@ -6,6 +6,7 @@ require github.com/cloudevents/sdk-go/v2 v2.15.2
 
 require (
 	github.com/NdoleStudio/httpsms-go v0.0.6
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
