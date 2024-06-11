@@ -79,6 +79,11 @@ func main() {
 
 	// Handle webhook request which has a payload of the cloudevents format
 	httpMux.HandleFunc("/webhook/", func(w http.ResponseWriter, r *http.Request) {
+		authorizationString := r.Header.Get("Authorization")
+		if authorizationString != "" {
+			log.Println("[INFO] Cloudevents webhook - Authorization header: ", authorizationString)
+		}
+
 		bytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Println("[ERROR] Cloudevents webhook - Read request body: ", err)
